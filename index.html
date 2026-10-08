@@ -21,7 +21,21 @@
   html{-webkit-text-size-adjust:100%}
   body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
        font-size:16px;line-height:1.55;letter-spacing:.005em;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:860px;margin:0 auto;padding:clamp(20px,4vw,48px) clamp(16px,4vw,32px) 72px}
+  .wrap{max-width:860px;margin:0 auto;padding:clamp(18px,3vw,30px) clamp(16px,4vw,32px) clamp(30px,5vw,48px)}
+
+  /* dark hero + footer band */
+  .hero-top{background:var(--ink);color:#fff}
+  .hwrap{max-width:860px;margin:0 auto;padding:clamp(42px,7vw,76px) clamp(16px,4vw,32px) clamp(34px,5vw,54px)}
+  .hero-top .eyebrow{color:#e7b9be;margin-bottom:16px}
+  .hero-top h1{color:#fff;margin-bottom:16px}
+  .hero-top h1 em{color:#f0a3aa;font-style:italic}
+  .hero-top .lede{color:#cbc1bc;margin:0;max-width:60ch}
+  .foot-band{background:var(--ink);color:#fff;margin-top:clamp(30px,5vw,46px)}
+  .foot-band .hwrap{padding-top:clamp(30px,4vw,44px);padding-bottom:clamp(44px,6vw,60px)}
+  .foot-band .foot{color:#a89f9a;margin:0 0 14px}
+  .foot-band .foot a{color:#f0a3aa}
+  .foot-band .credit{color:#8f8782;margin:0}
+  .foot-band .credit a{color:#f0a3aa}
 
   .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--crimson);margin:0 0 14px}
   h1{font-family:var(--serif);font-weight:600;font-size:clamp(28px,5vw,46px);line-height:1.05;margin:0 0 14px;letter-spacing:-.01em}
@@ -135,12 +149,13 @@
 </style>
 </head>
 <body>
-<div class="wrap">
+<header class="hero-top"><div class="hwrap">
   <p class="eyebrow">Калькулятор к докладу · PA Day</p>
   <h1>Свой Telegram-бот: сколько <em>стоит</em><br>и сколько <em>экономит</em></h1>
   <p class="lede">Соберите свой сценарий — и посмотрите, во сколько бот обойдётся в месяц и сколько времени он снимет с ассистента. Всё считается сразу; меняйте любые цифры под себя.</p>
-  <div class="rule"></div>
+</div></header>
 
+<div class="wrap">
   <!-- ============ ЧАСТЬ 1 — СТОИМОСТЬ СОДЕРЖАНИЯ ============ -->
   <p class="step">Часть 1</p>
   <h2 class="step-h">Сколько стоит содержать бота</h2>
@@ -321,12 +336,15 @@
     <p class="note" id="roiVerdict"></p>
   </div>
 
+</div>
+
+<footer class="foot-band"><div class="hwrap">
   <p class="foot">
     Оценка приблизительная и не является офертой. Стоимость «умной» части рассчитана по токенам и зависит от активности чата,
     выбранной модели и тарифов сервисов. Тарифы моделей и курс можно поменять в полях выше — перед стартом сверьтесь с актуальными ценами выбранного сервиса.
   </p>
-  <p class="credit">Вера Никитина · PA Day · <a href="https://t.me/verak_cosmo" style="color:var(--crimson)">@verak_cosmo</a></p>
-</div>
+  <p class="credit">Вера Никитина · PA Day · <a href="https://t.me/verak_cosmo">@verak_cosmo</a></p>
+</div></footer>
 
 <script>
 (function(){
