@@ -1,309 +1,489 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Калькулятор выгоды ИИ-бота · PA Day</title>
-<meta name="description" content="Посчитайте, выгодно ли отдать рутинные задачи ИИ-боту: стоимость вашего часа против стоимости ИИ-саммори.">
+<title>Свой Telegram-бот: сколько стоит и сколько экономит — калькулятор</title>
+<meta name="description" content="Калькулятор к докладу PA Day: сколько стоит содержать своего Telegram-бота для контроля поручений и сколько времени и денег он экономит.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --crimson:#AC2B37;
-    --crimson-dk:#7E1F27;
-    --ink:#201A1B;
-    --paper:#FBF6F6;
-    --card:#FFFFFF;
-    --soft:#F6EAEB;
-    --muted:#8A7F80;
-    --line:#ECE0E1;
-    --ok:#2E7D5B;
+    --crimson:#ac2b37; --crimson-2:#8f1f2a; --ink:#211d1c; --muted:#6d6560;
+    --bg:#faf7f4; --card:#ffffff; --line:#e9e2db; --line-2:#f1ebe4;
+    --good:#2f6b46; --good-soft:#8fce9f; --shadow:0 1px 2px rgba(33,29,28,.04),0 12px 30px rgba(33,29,28,.06);
     --serif:"Playfair Display",Georgia,serif;
-    --sans:"Inter",system-ui,-apple-system,sans-serif;
-    --mono:"Space Mono",ui-monospace,monospace;
-    --shadow:0 6px 24px rgba(90,60,62,.10);
+    --sans:"Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+    --mono:"Space Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
   }
   *{box-sizing:border-box}
-  html,body{margin:0}
-  body{
-    font-family:var(--sans);
-    color:var(--ink);
-    background:var(--paper);
-    line-height:1.5;
-    -webkit-font-smoothing:antialiased;
-  }
-  .wrap{max-width:960px;margin:0 auto;padding:0 20px}
+  html{-webkit-text-size-adjust:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+       font-size:16px;line-height:1.55;letter-spacing:.005em;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:860px;margin:0 auto;padding:clamp(20px,4vw,48px) clamp(16px,4vw,32px) 72px}
 
-  /* header */
-  header.hero{background:var(--ink);color:#fff;padding:46px 0 40px}
-  .tag{font-family:var(--mono);font-size:12px;letter-spacing:2px;color:#C98A90;text-transform:uppercase}
-  h1{font-family:var(--serif);font-weight:800;font-size:clamp(28px,6vw,46px);line-height:1.04;margin:14px 0 12px}
-  .sub{font-size:clamp(15px,2.4vw,18px);color:#E7D9DA;max-width:640px;margin:0}
+  .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--crimson);margin:0 0 14px}
+  h1{font-family:var(--serif);font-weight:600;font-size:clamp(28px,5vw,46px);line-height:1.05;margin:0 0 14px;letter-spacing:-.01em}
+  h1 em{font-style:italic;color:var(--crimson)}
+  .lede{max-width:62ch;color:var(--muted);font-size:clamp(15px,1.8vw,18px);margin:0 0 6px}
+  .rule{height:1px;background:var(--line);margin:26px 0 30px}
 
-  main{padding:34px 0 10px}
-  .lead{font-size:16px;color:var(--muted);max-width:680px;margin:0 0 26px}
+  .step{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--crimson);margin:40px 0 4px}
+  .step-h{font-family:var(--serif);font-weight:600;font-size:clamp(21px,3vw,28px);margin:0 0 6px;letter-spacing:-.01em}
+  .step-sub{color:var(--muted);font-size:14.5px;margin:0 0 22px;max-width:60ch}
 
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
-  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+  /* presets */
+  .presets{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:0 0 4px}
+  .presets .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+  .chip{font-family:var(--sans);font-size:13px;font-weight:500;color:var(--ink);background:var(--card);
+        border:1px solid var(--line);border-radius:999px;padding:7px 14px;cursor:pointer;transition:.15s}
+  .chip:hover{border-color:var(--crimson);color:var(--crimson)}
+  .chip:focus-visible{outline:2px solid var(--crimson);outline-offset:2px}
 
-  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:var(--shadow)}
-  .card .num{font-family:var(--mono);font-weight:700;font-size:13px;color:#fff;background:var(--crimson);width:30px;height:30px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;flex:none}
-  .card h2{font-family:var(--serif);font-weight:700;font-size:21px;margin:0;display:flex;gap:12px;align-items:center}
-  .card .hint{font-size:13px;color:var(--muted);margin:8px 0 18px 42px}
-  @media(max-width:720px){.card .hint{margin-left:0}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 22px 6px;box-shadow:var(--shadow);margin-bottom:20px}
+  .card h3{font-family:var(--serif);font-weight:600;font-size:18px;margin:0 0 3px}
+  .card .sub{color:var(--muted);font-size:13.5px;margin:0 0 18px}
+  .card .num{font-family:var(--mono);font-weight:700;color:var(--crimson);font-size:14px}
 
-  .field{margin-bottom:16px}
-  .field:last-child{margin-bottom:0}
-  .field label{display:block;font-size:14px;font-weight:500;margin-bottom:7px}
-  .inp{position:relative;display:flex;align-items:center}
-  input[type=number]{
-    width:100%;font-family:var(--mono);font-size:17px;font-weight:700;color:var(--ink);
-    background:#FFFCF2;border:1.5px solid #E7D08A;border-radius:10px;
-    padding:11px 52px 11px 13px;outline:none;transition:border-color .15s,box-shadow .15s;
-    -moz-appearance:textfield;
-  }
-  input[type=number]:focus{border-color:var(--crimson);box-shadow:0 0 0 3px rgba(172,43,55,.12)}
+  .field{margin:0 0 18px}
+  .field>label{display:block;font-weight:500;font-size:14.5px;margin:0 0 8px}
+  .field .hint{color:var(--muted);font-size:12.5px;font-weight:400}
+
+  .seg{display:flex;gap:6px;flex-wrap:wrap}
+  .seg button{flex:1 1 auto;min-width:76px;font-family:var(--sans);font-size:13.5px;font-weight:500;
+    color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 8px;cursor:pointer;transition:.15s}
+  .seg button:hover{border-color:var(--crimson)}
+  .seg button[aria-pressed="true"]{background:var(--crimson);border-color:var(--crimson);color:#fff}
+  .seg button:focus-visible{outline:2px solid var(--crimson);outline-offset:2px}
+
+  input[type=range]{width:100%;accent-color:var(--crimson);height:26px}
+  .rowline{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+  .rowline .val{font-family:var(--mono);font-weight:700;font-size:15px}
+  input[type=number]{font-family:var(--mono);font-size:14px;width:100%;padding:10px 11px;border:1px solid var(--line);
+    border-radius:10px;background:#fffdf8;color:var(--ink)}
+  input[type=number]:focus{outline:none;border-color:var(--crimson);box-shadow:0 0 0 3px rgba(172,43,55,.12)}
   input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
-  .unit{position:absolute;right:13px;font-family:var(--mono);font-size:13px;color:var(--muted);pointer-events:none}
+  input[type=number]{-moz-appearance:textfield}
+  .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .three{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+  @media(max-width:520px){.three{grid-template-columns:1fr 1fr}}
+  .mini-lbl{font-size:12px;color:var(--muted);margin:0 0 5px;display:block}
 
-  .out{margin-top:14px;padding-top:14px;border-top:1px dashed var(--line);display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-  .out .k{font-size:13px;color:var(--muted)}
-  .out .v{font-family:var(--mono);font-weight:700;font-size:20px;color:var(--crimson-dk)}
+  .field>label.toggle,.toggle{display:flex;align-items:center;gap:12px;cursor:pointer;user-select:none}
+  .toggle input{position:absolute;opacity:0;width:0;height:0}
+  .switch{width:44px;height:26px;border-radius:999px;background:var(--line);position:relative;transition:.18s;flex:none}
+  .switch::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:.18s}
+  .toggle input:checked + .switch{background:var(--crimson)}
+  .toggle input:checked + .switch::after{transform:translateX(18px)}
+  .toggle input:focus-visible + .switch{outline:2px solid var(--crimson);outline-offset:2px}
+  .toggle .t-txt{font-size:14px}
+  .toggle .t-txt small{display:block;color:var(--muted);font-size:12.5px}
+  .subopt{margin-top:12px;padding-left:56px}
+  .subopt[hidden]{display:none}
 
-  /* result panel */
-  .result{background:var(--ink);color:#fff;border-radius:18px;padding:30px 26px;margin:24px 0 10px}
-  .result .cap{font-family:var(--mono);font-size:12px;letter-spacing:2px;color:#C98A90;text-transform:uppercase}
-  .big{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px;margin:18px 0 4px}
-  @media(max-width:560px){.big{grid-template-columns:1fr}}
-  .stat .n{font-family:var(--serif);font-weight:800;font-size:clamp(26px,5.4vw,38px);line-height:1;color:#fff}
-  .stat .n.save{color:#8FE3B5}
-  .stat .l{font-size:13px;color:#C9BEBF;margin-top:7px}
+  .outrow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:12px 0 16px;border-top:1px dashed var(--line);margin-top:2px}
+  .outrow .k{font-size:13.5px;color:var(--muted)}
+  .outrow .v{font-family:var(--mono);font-weight:700;font-size:18px;color:var(--crimson-2)}
 
-  .bars{margin-top:26px}
-  .barrow{margin-bottom:14px}
-  .barrow .top{display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px;color:#E7D9DA}
-  .barrow .top b{font-family:var(--mono)}
-  .track{background:#3A3132;border-radius:8px;height:26px;overflow:hidden}
-  .fill{height:100%;border-radius:8px;transition:width .35s ease}
-  .fill.manual{background:var(--crimson)}
-  .fill.bot{background:#4FA97E}
+  /* dark result card */
+  .rcard{background:var(--ink);color:#fff;border-radius:18px;padding:26px 24px;box-shadow:0 20px 50px rgba(33,29,28,.22);margin:4px 0 2px}
+  .rcard .r-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#e7b9be;margin:0 0 18px}
+  .hero{margin:0 0 18px}
+  .hero .cap{font-size:12.5px;color:#c9c1bc;letter-spacing:.02em;margin:0 0 4px}
+  .hero .big{font-family:var(--mono);font-weight:700;font-size:clamp(34px,7vw,46px);line-height:1;letter-spacing:-.01em}
+  .hero .big .cur{font-size:.5em;color:#e7b9be;font-weight:400;margin-left:6px}
+  .hero .usd{font-family:var(--mono);font-size:13px;color:#a89f9a;margin-top:6px}
+  .hero.start .big{color:#f4c7cc;font-size:clamp(24px,5vw,30px)}
+  .hdiv{height:1px;background:rgba(255,255,255,.12);margin:18px 0}
 
-  .note{font-size:13px;color:var(--muted);background:var(--soft);border-radius:12px;padding:16px 18px;margin:18px 0}
-  .note b{color:var(--ink)}
+  .break{margin:2px 0 0}
+  .brow{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.08)}
+  .brow:last-child{border-bottom:none}
+  .brow .n{font-size:13.5px}
+  .brow .n small{display:block;color:#a89f9a;font-size:11.5px;margin-top:1px}
+  .brow .a{font-family:var(--mono);font-size:13.5px;white-space:nowrap}
+  .brow .a.free{color:var(--good-soft)}
+  .brow.one .a{color:#f4c7cc}
 
-  details{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:4px 18px;margin:10px 0 0}
-  summary{cursor:pointer;font-weight:600;font-size:15px;padding:14px 0;list-style:none}
-  summary::-webkit-details-marker{display:none}
-  summary::before{content:"+ ";font-family:var(--mono);color:var(--crimson)}
-  details[open] summary::before{content:"– "}
-  details .body{padding:0 0 16px}
+  /* first-month highlight */
+  .firstbox{background:rgba(244,199,204,.12);border:1px solid rgba(244,199,204,.28);border-radius:12px;padding:14px 16px;margin:18px 0 0}
+  .firstbox .fm{font-size:13.5px;line-height:1.5;margin:0}
+  .firstbox .fm b{color:#f4c7cc}
+  .note{font-size:12.5px;color:#b8afaa;margin:14px 0 0;line-height:1.5}
+  .note b{color:#eee}
 
-  .toolbar{display:flex;gap:12px;flex-wrap:wrap;margin:20px 0 6px}
-  button.reset{font-family:var(--sans);font-size:14px;font-weight:600;color:var(--crimson);background:#fff;border:1.5px solid var(--crimson);border-radius:10px;padding:10px 18px;cursor:pointer;transition:background .15s,color .15s}
-  button.reset:hover{background:var(--crimson);color:#fff}
+  /* ROI savings */
+  .savegrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin:4px 0 2px}
+  @media(max-width:560px){.savegrid{grid-template-columns:1fr}}
+  .sstat .sn{font-family:var(--serif);font-weight:700;font-size:clamp(24px,5vw,34px);line-height:1;color:#fff}
+  .sstat .sn.save{color:var(--good-soft)}
+  .sstat .sl{font-size:12.5px;color:#c9c1bc;margin-top:7px}
+  .cmp{margin-top:22px}
+  .cmprow{margin-bottom:13px}
+  .cmprow .top{display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:6px;color:#d9d0cb}
+  .cmprow .top b{font-family:var(--mono)}
+  .cmptrack{background:#39302f;border-radius:8px;height:24px;overflow:hidden}
+  .cmpfill{height:100%;border-radius:8px;transition:width .35s ease}
+  .cmpfill.manual{background:var(--crimson)}
+  .cmpfill.bot{background:#4FA97E}
 
-  footer{border-top:1px solid var(--line);margin-top:34px;padding:26px 0 46px;color:var(--muted);font-size:14px}
-  footer a{color:var(--crimson-dk);text-decoration:none;font-weight:600}
-  footer .mono{font-family:var(--mono);font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+  .foot{color:var(--muted);font-size:12px;line-height:1.6;margin:30px 0 0;max-width:72ch}
+  .foot a{color:var(--crimson)}
+  .credit{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:28px 0 0}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
-
-<header class="hero">
-  <div class="wrap">
-    <span class="tag">PA Day · 17 октября</span>
-    <h1>Выгодно ли отдать<br>рутину ИИ-боту?</h1>
-    <p class="sub">Калькулятор считает стоимость вашего часа и сравнивает её со стоимостью ИИ-саммори. Заполните только цифры — всё посчитается само.</p>
-  </div>
-</header>
-
-<main>
 <div class="wrap">
-  <p class="lead">Пример уже заполнен. Меняйте значения под себя — результат пересчитывается на лету.</p>
+  <p class="eyebrow">Калькулятор к докладу · PA Day</p>
+  <h1>Свой Telegram-бот: сколько <em>стоит</em><br>и сколько <em>экономит</em></h1>
+  <p class="lede">Соберите свой сценарий — и посмотрите, во сколько бот обойдётся в месяц и сколько времени он снимет с ассистента. Всё считается сразу; меняйте любые цифры под себя.</p>
+  <div class="rule"></div>
 
-  <div class="grid">
-    <!-- 1 -->
-    <section class="card">
-      <h2><span class="num">1</span> Сколько стоит ваш час</h2>
-      <p class="hint">Считаем «полную» стоимость — с налогами и расходами на сотрудника.</p>
-      <div class="field">
-        <label for="salary">Зарплата в месяц, до налогов</label>
-        <div class="inp"><input id="salary" type="number" inputmode="numeric" min="0" step="1000" value="120000"><span class="unit">₽</span></div>
-      </div>
-      <div class="field">
-        <label for="overhead">Налоги и расходы на сотрудника</label>
-        <div class="inp"><input id="overhead" type="number" inputmode="numeric" min="0" step="1" value="30"><span class="unit">%</span></div>
-      </div>
-      <div class="field">
-        <label for="hours">Рабочих часов в месяц</label>
-        <div class="inp"><input id="hours" type="number" inputmode="numeric" min="1" step="1" value="160"><span class="unit">ч</span></div>
-      </div>
-      <div class="out"><span class="k">Стоимость вашего часа</span><span class="v" id="r_hour">—</span></div>
-    </section>
+  <!-- ============ ЧАСТЬ 1 — СТОИМОСТЬ СОДЕРЖАНИЯ ============ -->
+  <p class="step">Часть 1</p>
+  <h2 class="step-h">Сколько стоит содержать бота</h2>
+  <p class="step-sub">Бот платит только за «умную» часть — разбор переписки на задачи. Telegram, Python и напоминания — бесплатно.</p>
 
-    <!-- 2 -->
-    <section class="card">
-      <h2><span class="num">2</span> Без бота — вручную</h2>
-      <p class="hint">Сбор задач из чата, напоминания, вечерний дайджест — руками.</p>
-      <div class="field">
-        <label for="manmin">Минут в день на эту рутину</label>
-        <div class="inp"><input id="manmin" type="number" inputmode="numeric" min="0" step="5" value="40"><span class="unit">мин</span></div>
-      </div>
-      <div class="field">
-        <label for="days">Рабочих дней в месяц</label>
-        <div class="inp"><input id="days" type="number" inputmode="numeric" min="1" step="1" value="21"><span class="unit">дн</span></div>
-      </div>
-      <div class="out"><span class="k">Часов в месяц на рутину</span><span class="v" id="r_manh">—</span></div>
-      <div class="out"><span class="k">Стоит в месяц</span><span class="v" id="r_mancost">—</span></div>
-    </section>
+  <div class="presets" role="group" aria-label="Готовые сценарии">
+    <span class="lbl">Быстрый старт:</span>
+    <button class="chip" data-preset="min">Минимальный</button>
+    <button class="chip" data-preset="sred">Средний</button>
+    <button class="chip" data-preset="max">Активная команда</button>
+  </div>
+  <div style="height:18px"></div>
 
-    <!-- 3 -->
-    <section class="card">
-      <h2><span class="num">3</span> С ботом — ИИ-саммори</h2>
-      <p class="hint">Бот сам разбирает чат и шлёт дайджесты. Вы только проверяете.</p>
-      <div class="field">
-        <label for="req">Обращений к ИИ в день</label>
-        <div class="inp"><input id="req" type="number" inputmode="numeric" min="0" step="1" value="30"><span class="unit">шт</span></div>
+  <div class="card">
+    <h3>Ваш рабочий чат</h3>
+    <p class="sub">От объёма переписки зависит, сколько «читает» ИИ-модель.</p>
+    <div class="field">
+      <div class="rowline"><label for="msgs">Сообщений в чате в день</label><span class="val" id="msgsVal">200</span></div>
+      <input type="range" id="msgs" min="20" max="600" step="10" value="200">
+    </div>
+    <div class="field">
+      <label>Средняя длина сообщения</label>
+      <div class="seg" id="len" role="group" aria-label="Средняя длина сообщения">
+        <button data-v="10">Короткие</button>
+        <button data-v="25" aria-pressed="true">Средние</button>
+        <button data-v="50">Длинные</button>
       </div>
-      <div class="field">
-        <label for="price">Стоимость одного обращения</label>
-        <div class="inp"><input id="price" type="number" inputmode="decimal" min="0" step="0.1" value="1"><span class="unit">₽</span></div>
-      </div>
-      <div class="field">
-        <label for="botmin">Минут в день, которые всё ещё тратите</label>
-        <div class="inp"><input id="botmin" type="number" inputmode="numeric" min="0" step="5" value="10"><span class="unit">мин</span></div>
-      </div>
-      <div class="out"><span class="k">ИИ в месяц</span><span class="v" id="r_ai">—</span></div>
-      <div class="out"><span class="k">Итого с ботом в месяц</span><span class="v" id="r_botcost">—</span></div>
-    </section>
-
-    <!-- 4 helper -->
-    <section class="card">
-      <h2><span class="num">4</span> Что это даёт за год</h2>
-      <p class="hint">Та же рутина, но руками — и с ботом. Разница за 12 месяцев.</p>
-      <div class="out"><span class="k">Вручную за год</span><span class="v" id="r_manyear">—</span></div>
-      <div class="out"><span class="k">С ботом за год</span><span class="v" id="r_botyear">—</span></div>
-      <div class="out"><span class="k">Освобождается времени в месяц</span><span class="v" id="r_freeh">—</span></div>
-    </section>
+    </div>
   </div>
 
-  <!-- RESULT -->
-  <section class="result">
-    <span class="cap">Ваша выгода</span>
-    <div class="big">
-      <div class="stat"><div class="n save" id="r_savemonth">—</div><div class="l">экономия в месяц</div></div>
-      <div class="stat"><div class="n save" id="r_saveyear">—</div><div class="l">экономия в год</div></div>
-      <div class="stat"><div class="n" id="r_times">—</div><div class="l">во столько раз дешевле</div></div>
-    </div>
-    <div class="bars">
-      <div class="barrow">
-        <div class="top"><span>Вручную, ₽/мес</span><b id="b_manual">—</b></div>
-        <div class="track"><div class="fill manual" id="bar_manual" style="width:0"></div></div>
-      </div>
-      <div class="barrow">
-        <div class="top"><span>С ботом, ₽/мес</span><b id="b_bot">—</b></div>
-        <div class="track"><div class="fill bot" id="bar_bot" style="width:0"></div></div>
+  <div class="card">
+    <h3>Что делает бот</h3>
+    <p class="sub">«Саммори» — это обращение к ИИ, которое превращает переписку в список задач.</p>
+    <div class="field">
+      <label>Сводок в день <span class="hint">(«саммори»)</span></label>
+      <div class="seg" id="sum" role="group" aria-label="Сводок в день">
+        <button data-v="1">1 · вечер</button>
+        <button data-v="2" aria-pressed="true">2 · утро и вечер</button>
+        <button data-v="3">3+</button>
       </div>
     </div>
-  </section>
-
-  <p class="note" id="verdict"></p>
-
-  <details>
-    <summary>Как прикинуть стоимость одного обращения к ИИ</summary>
-    <div class="body">
-      <div class="grid" style="margin-bottom:12px">
-        <div class="field">
-          <label for="tok">Токенов на одно обращение</label>
-          <div class="inp"><input id="tok" type="number" inputmode="numeric" min="0" step="500" value="3000"><span class="unit">тк</span></div>
-        </div>
-        <div class="field">
-          <label for="tokprice">Цена за 1000 токенов</label>
-          <div class="inp"><input id="tokprice" type="number" inputmode="decimal" min="0" step="0.05" value="0.30"><span class="unit">₽</span></div>
-        </div>
-      </div>
-      <div class="out" style="border-top:none;padding-top:0">
-        <span class="k">Стоимость обращения ≈</span><span class="v" id="r_tok">—</span>
-      </div>
-      <p class="hint" style="margin:12px 0 0">Получившуюся цифру впишите в поле «Стоимость одного обращения» в блоке 3. Цены зависят от модели и способа оплаты — подставьте актуальные для вашего ИИ.</p>
+    <div class="field">
+      <label class="toggle">
+        <input type="checkbox" id="smart">
+        <span class="switch"></span>
+        <span class="t-txt">Умные напоминания через ИИ
+          <small>Бот сам сверяет статусы задач (+1 обращение к модели в день). Обычные напоминания — бесплатно.</small>
+        </span>
+      </label>
     </div>
-  </details>
-
-  <div class="toolbar">
-    <button class="reset" id="reset">Сбросить к примеру</button>
   </div>
+
+  <div class="card">
+    <h3>ИИ-модель <span class="num">— «умная» часть</span></h3>
+    <p class="sub">Единственная услуга, которую бот оплачивает по факту — за каждый запрос.</p>
+    <div class="field">
+      <label>Модель</label>
+      <div class="seg" id="model" role="group" aria-label="Модель">
+        <button data-v="mini" aria-pressed="true">GPT-4o mini</button>
+        <button data-v="4o">GPT-4o</button>
+        <button data-v="custom">Своя</button>
+      </div>
+      <p class="hint" id="modelNote" style="margin:9px 0 0">Дешёвая, как у Веры. ~$0.15 / $0.60 за 1 млн токенов.</p>
+    </div>
+    <div class="field two">
+      <div><span class="mini-lbl">$ за 1 млн входящих</span><input type="number" id="pin" value="0.15" step="0.01" min="0" inputmode="decimal"></div>
+      <div><span class="mini-lbl">$ за 1 млн исходящих</span><input type="number" id="pout" value="0.60" step="0.01" min="0" inputmode="decimal"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3>Наставник и где живёт бот</h3>
+    <p class="sub">Платными могут быть только подписка на ИИ-наставника (на время сборки) и аренда сервера.</p>
+    <div class="field">
+      <label class="toggle">
+        <input type="checkbox" id="mentor" checked>
+        <span class="switch"></span>
+        <span class="t-txt">Подписка на ИИ-наставника (Claude Pro)
+          <small>Помогает собрать бота. Нужна в основном на этапе сборки — считаем разово.</small>
+        </span>
+      </label>
+      <div class="subopt" id="mentorOpt">
+        <div class="two">
+          <div><span class="mini-lbl">$ в месяц</span><input type="number" id="mprice" value="20" step="1" min="0" inputmode="decimal"></div>
+          <div><span class="mini-lbl">Месяцев сборки</span><input type="number" id="mmonths" value="1" step="1" min="1" inputmode="numeric"></div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Где работает бот</label>
+      <div class="seg" id="host" role="group" aria-label="Где работает бот">
+        <button data-v="laptop" aria-pressed="true">На ноутбуке · 0 ₽</button>
+        <button data-v="server">Аренда сервера</button>
+      </div>
+      <div class="subopt" id="serverOpt" hidden>
+        <span class="mini-lbl">Аренда сервера, ₽ в месяц</span>
+        <input type="number" id="sprice" value="400" step="50" min="0" inputmode="numeric">
+      </div>
+    </div>
+    <div class="field">
+      <div class="two">
+        <div><span class="mini-lbl">Курс, ₽ за 1 $</span><input type="number" id="rate" value="85" step="0.5" min="1" inputmode="decimal"></div>
+        <div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="rcard" aria-live="polite">
+    <p class="r-eyebrow">Стоимость содержания</p>
+    <div class="hero">
+      <p class="cap">Каждый месяц — работа бота</p>
+      <div class="big"><span id="monthRub">3</span><span class="cur">₽/мес</span></div>
+      <div class="usd" id="monthUsd"></div>
+    </div>
+    <div class="hero start" id="startWrap">
+      <p class="cap">Разово на старте — сборка с наставником</p>
+      <div class="big"><span id="startRub">1 700</span><span class="cur">₽</span></div>
+    </div>
+    <div class="hdiv"></div>
+    <div class="break" id="break"></div>
+    <div class="firstbox" id="firstBox"><p class="fm" id="firstMonth"></p></div>
+    <p class="note" id="reassure"></p>
+  </div>
+
+  <!-- ============ ЧАСТЬ 2 — ROI ============ -->
+  <p class="step">Часть 2</p>
+  <h2 class="step-h">А сколько это экономит</h2>
+  <p class="step-sub">Сравниваем: та же рутина руками — и с ботом. «С ботом» здесь берёт честную цифру содержания из расчёта выше плюс ваши несколько минут на проверку.</p>
+
+  <div class="card">
+    <h3>Сколько стоит ваш час</h3>
+    <p class="sub">Считаем «полную» стоимость — с налогами и расходами на сотрудника.</p>
+    <div class="field three">
+      <div><span class="mini-lbl">Зарплата в месяц, ₽</span><input type="number" id="salary" value="120000" step="1000" min="0" inputmode="numeric"></div>
+      <div><span class="mini-lbl">Налоги/расходы, %</span><input type="number" id="overhead" value="30" step="1" min="0" inputmode="numeric"></div>
+      <div><span class="mini-lbl">Рабочих часов в мес.</span><input type="number" id="hours" value="160" step="1" min="1" inputmode="numeric"></div>
+    </div>
+    <div class="outrow"><span class="k">Стоимость вашего часа</span><span class="v" id="roiHour">—</span></div>
+  </div>
+
+  <div class="card">
+    <h3>Рутина по задачам: вручную vs с ботом</h3>
+    <p class="sub">Сбор задач из чата, напоминания, вечерний дайджест.</p>
+    <div class="field two">
+      <div><span class="mini-lbl">Минут в день — вручную</span><input type="number" id="manmin" value="40" step="5" min="0" inputmode="numeric"></div>
+      <div><span class="mini-lbl">Рабочих дней в месяц</span><input type="number" id="days" value="21" step="1" min="1" inputmode="numeric"></div>
+    </div>
+    <div class="field">
+      <span class="mini-lbl">Минут в день с ботом — только проверить и поправить</span>
+      <input type="number" id="botmin" value="10" step="5" min="0" inputmode="numeric">
+    </div>
+    <div class="outrow"><span class="k">Вручную стоит в месяц</span><span class="v" id="roiManual">—</span></div>
+  </div>
+
+  <div class="rcard" aria-live="polite">
+    <p class="r-eyebrow">Ваша выгода</p>
+    <div class="savegrid">
+      <div class="sstat"><div class="sn save" id="roiSaveM">—</div><div class="sl">экономия в месяц</div></div>
+      <div class="sstat"><div class="sn save" id="roiSaveY">—</div><div class="sl">экономия в год</div></div>
+      <div class="sstat"><div class="sn" id="roiTimes">—</div><div class="sl">во столько раз дешевле</div></div>
+    </div>
+    <div class="hdiv"></div>
+    <div class="break">
+      <div class="brow"><div class="n">Содержание бота <small>из расчёта в Части 1</small></div><div class="a" id="roiBotRun">—</div></div>
+      <div class="brow"><div class="n">Ваше время на проверку <small id="roiBotTimeSub">10 мин/день</small></div><div class="a" id="roiBotTime">—</div></div>
+      <div class="brow one"><div class="n">Итого «с ботом» в месяц</div><div class="a" id="roiBotTotal">—</div></div>
+    </div>
+    <div class="cmp">
+      <div class="cmprow">
+        <div class="top"><span>Вручную, ₽/мес</span><b id="bManual">—</b></div>
+        <div class="cmptrack"><div class="cmpfill manual" id="barManual" style="width:0"></div></div>
+      </div>
+      <div class="cmprow">
+        <div class="top"><span>С ботом, ₽/мес</span><b id="bBot">—</b></div>
+        <div class="cmptrack"><div class="cmpfill bot" id="barBot" style="width:0"></div></div>
+      </div>
+    </div>
+    <p class="note" id="roiVerdict"></p>
+  </div>
+
+  <p class="foot">
+    Оценка приблизительная и не является офертой. Стоимость «умной» части рассчитана по токенам и зависит от активности чата,
+    выбранной модели и тарифов сервисов. Тарифы моделей и курс можно поменять в полях выше — перед стартом сверьтесь с актуальными ценами выбранного сервиса.
+  </p>
+  <p class="credit">Вера Никитина · PA Day · <a href="https://t.me/verak_cosmo" style="color:var(--crimson)">@verak_cosmo</a></p>
 </div>
-</main>
-
-<footer>
-  <div class="wrap">
-    <div class="mono">Вера Никитина · PA Day</div>
-    <p style="margin:8px 0 0">Калькулятор к докладу «Свой Telegram-бот без строчки кода». Вопросы и бот — <a href="https://t.me/verak_cosmo">@verak_cosmo</a></p>
-  </div>
-</footer>
 
 <script>
-  var rub = new Intl.NumberFormat('ru-RU',{maximumFractionDigits:0});
-  var rub1 = new Intl.NumberFormat('ru-RU',{maximumFractionDigits:1});
-  function val(id){var n=parseFloat(document.getElementById(id).value);return isNaN(n)?0:n;}
-  function money(x){return rub.format(Math.round(x))+' ₽';}
-  function hrs(x){return rub1.format(x)+' ч';}
+(function(){
+  var $=function(s){return document.querySelector(s)};
+  var MODELS={
+    mini:{in:0.15,out:0.60,note:'Дешёвая, как у Веры. ~$0.15 / $0.60 за 1 млн токенов.'},
+    '4o':{in:2.50,out:10.00,note:'Заметно умнее, но в ~17 раз дороже. ~$2.50 / $10 за 1 млн токенов.'},
+    custom:{in:null,out:null,note:'Впишите тарифы своего сервиса (YandexGPT, GigaChat, DeepSeek, Claude…).'}
+  };
+  var state={msgs:200,len:25,sum:2,smart:false,model:'mini',pin:0.15,pout:0.60,
+             mentor:true,mprice:20,mmonths:1,host:'laptop',sprice:400,rate:85,
+             salary:120000,overhead:30,hours:160,manmin:40,days:21,botmin:10};
 
-  function calc(){
-    var salary=val('salary'), overhead=val('overhead'), hours=val('hours')||1;
-    var hourCost = salary*(1+overhead/100)/hours;
+  function seg(id,key,cb){
+    var box=$('#'+id);
+    box.addEventListener('click',function(e){
+      var b=e.target.closest('button'); if(!b)return;
+      [].forEach.call(box.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed', x===b?'true':'false')});
+      var v=b.dataset.v; state[key]= isNaN(+v)? v : +v;
+      if(cb)cb(v); render();
+    });
+  }
+  seg('len','len'); seg('sum','sum');
+  seg('model','model',function(v){
+    $('#modelNote').textContent=MODELS[v].note;
+    if(v!=='custom'){ state.pin=MODELS[v].in; state.pout=MODELS[v].out; $('#pin').value=state.pin; $('#pout').value=state.pout; }
+  });
+  seg('host','host',function(v){ $('#serverOpt').hidden=(v!=='server'); });
 
-    var manmin=val('manmin'), days=val('days');
-    var manH = manmin*days/60;
-    var manCost = manH*hourCost;
+  $('#msgs').addEventListener('input',function(){state.msgs=+this.value; $('#msgsVal').textContent=this.value; render();});
+  function num(id,key){ $('#'+id).addEventListener('input',function(){ var v=parseFloat(this.value); state[key]=isNaN(v)?0:v; render(); }); }
+  num('pin','pin'); num('pout','pout'); num('mprice','mprice'); num('mmonths','mmonths'); num('sprice','sprice'); num('rate','rate');
+  num('salary','salary'); num('overhead','overhead'); num('hours','hours'); num('manmin','manmin'); num('days','days'); num('botmin','botmin');
+  $('#pin').addEventListener('input',setCustom); $('#pout').addEventListener('input',setCustom);
+  function setCustom(){ if(state.model!=='custom'){ state.model='custom';
+    [].forEach.call($('#model').querySelectorAll('button'),function(x){x.setAttribute('aria-pressed', x.dataset.v==='custom'?'true':'false')});
+    $('#modelNote').textContent=MODELS.custom.note; } }
 
-    var req=val('req'), price=val('price'), botmin=val('botmin');
-    var aiCost = req*price*days;
-    var botResidualH = botmin*days/60;
-    var botCost = aiCost + botResidualH*hourCost;
+  $('#smart').addEventListener('change',function(){state.smart=this.checked; render();});
+  $('#mentor').addEventListener('change',function(){state.mentor=this.checked; $('#mentorOpt').style.display=this.checked?'':'none'; render();});
 
-    var saveMonth = manCost - botCost;
-    var times = botCost>0 ? manCost/botCost : 0;
-    var freeH = manH - botResidualH;
+  var PRESETS={
+    min :{msgs:60, len:10, sum:1, smart:false, model:'mini', mentor:false, host:'laptop'},
+    sred:{msgs:200,len:25, sum:2, smart:false, model:'mini', mentor:true,  mmonths:1, host:'laptop'},
+    max :{msgs:400,len:50, sum:2, smart:true,  model:'4o',   mentor:true,  mmonths:1, host:'server', sprice:400}
+  };
+  [].forEach.call(document.querySelectorAll('.chip'),function(c){
+    c.addEventListener('click',function(){ apply(PRESETS[c.dataset.preset]); });
+  });
+  function apply(p){
+    Object.keys(p).forEach(function(k){ state[k]=p[k]; });
+    if(p.model && p.model!=='custom'){ state.pin=MODELS[p.model].in; state.pout=MODELS[p.model].out; }
+    $('#msgs').value=state.msgs; $('#msgsVal').textContent=state.msgs;
+    pressSeg('len',state.len); pressSeg('sum',state.sum); pressSeg('model',state.model); pressSeg('host',state.host);
+    $('#pin').value=state.pin; $('#pout').value=state.pout; $('#modelNote').textContent=MODELS[state.model].note;
+    $('#smart').checked=state.smart;
+    $('#mentor').checked=state.mentor; $('#mentorOpt').style.display=state.mentor?'':'none';
+    if(state.mmonths)$('#mmonths').value=state.mmonths;
+    $('#serverOpt').hidden=(state.host!=='server'); if(state.sprice)$('#sprice').value=state.sprice;
+    render();
+  }
+  function pressSeg(id,v){ var box=$('#'+id);
+    [].forEach.call(box.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed', (''+x.dataset.v)===(''+v)?'true':'false')}); }
 
-    document.getElementById('r_hour').textContent = money(hourCost);
-    document.getElementById('r_manh').textContent = hrs(manH);
-    document.getElementById('r_mancost').textContent = money(manCost);
-    document.getElementById('r_ai').textContent = money(aiCost);
-    document.getElementById('r_botcost').textContent = money(botCost);
-    document.getElementById('r_manyear').textContent = money(manCost*12);
-    document.getElementById('r_botyear').textContent = money(botCost*12);
-    document.getElementById('r_freeh').textContent = hrs(freeH);
+  function fmtRub(x){ if(x>0 && x<1) return '<1'; return Math.round(x).toLocaleString('ru-RU'); }
+  function fmtUsd(x){ return x<1 ? x.toFixed(2) : x.toFixed(x<10?1:0); }
+  function hrs(x){ return (Math.round(x*10)/10).toLocaleString('ru-RU')+' ч'; }
 
-    document.getElementById('r_savemonth').textContent = money(saveMonth);
-    document.getElementById('r_saveyear').textContent = money(saveMonth*12);
-    document.getElementById('r_times').textContent = times>0 ? '×'+rub1.format(times) : '—';
-
-    var mx = Math.max(manCost, botCost, 1);
-    document.getElementById('bar_manual').style.width = (manCost/mx*100)+'%';
-    document.getElementById('bar_bot').style.width = (botCost/mx*100)+'%';
-    document.getElementById('b_manual').textContent = money(manCost);
-    document.getElementById('b_bot').textContent = money(botCost);
-
-    var v=document.getElementById('verdict');
-    if(saveMonth>0){
-      v.innerHTML = 'При этих цифрах бот освобождает <b>'+rub1.format(freeH)+' ч</b> в месяц и экономит <b>'+money(saveMonth)+'</b> — это <b>'+money(saveMonth*12)+'</b> в год. Один раз собрать — и платить в разы меньше.';
-    } else {
-      v.innerHTML = 'При этих цифрах ручной способ пока дешевле. Это нормально: чем дороже ваш час и чем больше рутины в чате — тем сильнее выигрывает бот. Поменяйте вводные и посмотрите порог.';
-    }
-
-    var t=val('tok'), tp=val('tokprice');
-    document.getElementById('r_tok').textContent = money(t/1000*tp);
+  function calcCost(){
+    var chatTok=state.msgs*state.len;
+    var inPerRun=chatTok+250;
+    var outPerRun=Math.round(state.msgs*4)+300;
+    var runs=state.sum + (state.smart?1:0);
+    var dayUsd=runs*((inPerRun/1e6)*state.pin + (outPerRun/1e6)*state.pout);
+    var apiUsd=dayUsd*30;
+    var apiRub=apiUsd*state.rate;
+    var serverRub=state.host==='server'? state.sprice : 0;
+    var monthRub=apiRub+serverRub;
+    var startUsd=state.mentor? state.mprice*Math.max(1,state.mmonths||1) : 0;
+    var startRub=startUsd*state.rate;
+    var runsMonth=runs*30;
+    return {apiUsd:apiUsd,apiRub:apiRub,serverRub:serverRub,monthRub:monthRub,
+            startRub:startRub,startUsd:startUsd,runsMonth:runsMonth,inPerRun:inPerRun};
   }
 
-  var defaults={salary:120000,overhead:30,hours:160,manmin:40,days:21,req:30,price:1,botmin:10,tok:3000,tokprice:0.30};
-  document.querySelectorAll('input[type=number]').forEach(function(el){el.addEventListener('input',calc);});
-  document.getElementById('reset').addEventListener('click',function(){
-    for(var k in defaults){document.getElementById(k).value=defaults[k];}
-    calc();
-  });
-  calc();
+  function row(name,amount,sub,cls){
+    cls=cls||''; var acls=(cls==='free')?'a free':'a';
+    var rc=(cls==='one')?'brow one':'brow';
+    return '<div class="'+rc+'"><div class="n">'+name+(sub?'<small>'+sub+'</small>':'')+'</div><div class="'+acls+'">'+amount+'</div></div>';
+  }
+
+  function render(){
+    var r=calcCost();
+    $('#monthRub').textContent=fmtRub(r.monthRub);
+    $('#monthUsd').textContent='≈ $'+fmtUsd(r.apiUsd)+' на модель'+(r.serverRub?' + сервер':'')+' в месяц';
+    var sw=$('#startWrap');
+    if(r.startRub>0){ sw.style.display=''; $('#startRub').textContent=fmtRub(r.startRub); } else { sw.style.display='none'; }
+
+    var rows=[];
+    rows.push(row('Умная часть — обращения к ИИ-модели', fmtRub(r.apiRub)+' ₽/мес',
+      '≈ '+r.runsMonth.toLocaleString('ru-RU')+' запросов/мес · ~'+r.inPerRun.toLocaleString('ru-RU')+' токенов в запросе'));
+    if(r.serverRub>0) rows.push(row('Аренда сервера (VPS)', fmtRub(r.serverRub)+' ₽/мес','бот работает круглосуточно'));
+    else rows.push(row('Сервер','0 ₽','бот работает на вашем ноутбуке','free'));
+    rows.push(row('Telegram и сам бот','0 ₽','создание через @BotFather','free'));
+    rows.push(row('Python и библиотеки','0 ₽','язык и «кирпичики» кода','free'));
+    rows.push(row('Напоминания коллегам','0 ₽','отправляет сам бот в чате','free'));
+    if(r.startRub>0) rows.push(row('ИИ-наставник (Claude Pro)', fmtRub(r.startRub)+' ₽','разово, на время сборки','one'));
+    $('#break').innerHTML=rows.join('');
+
+    var firstRub=r.monthRub + (r.startUsd? state.mprice*state.rate : 0);
+    $('#firstMonth').innerHTML = r.startRub>0
+      ? 'В первый месяц сборы больше: <b>≈ '+fmtRub(firstRub)+' ₽</b> — работа бота плюс разовая сборка с наставником. Со второго месяца — только <b>'+fmtRub(r.monthRub)+' ₽/мес</b>.'
+      : 'Разовых трат нет — только <b>'+fmtRub(r.monthRub)+' ₽/мес</b> за работу бота.';
+    $('#firstBox').style.display = (firstRub>r.monthRub || r.monthRub>0) ? '' : 'none';
+
+    var msg;
+    if(r.apiRub<100) msg='Разбор переписки на этой модели стоит буквально копейки — дешевле одной чашки кофе в месяц.';
+    else if(r.apiRub<800) msg='Расход на модель — скромный и предсказуемый. В статье Вера закладывает ~5 $/мес с запасом на эксперименты и рост чата.';
+    else msg='На этой модели и объёме счёт заметный — если нужно дешевле, попробуйте GPT-4o mini или меньше сводок в день.';
+    $('#reassure').textContent=msg;
+
+    // ---- ROI ----
+    var hours=state.hours||1;
+    var hourCost=state.salary*(1+state.overhead/100)/hours;
+    var manualH=state.manmin*state.days/60;
+    var manualCost=manualH*hourCost;
+    var botTimeH=state.botmin*state.days/60;
+    var botTimeCost=botTimeH*hourCost;
+    var botTotal=r.monthRub+botTimeCost;
+    var saveM=manualCost-botTotal;
+    var times=botTotal>0? manualCost/botTotal : 0;
+
+    $('#roiHour').textContent=fmtRub(hourCost)+' ₽';
+    $('#roiManual').textContent=fmtRub(manualCost)+' ₽';
+    $('#roiBotRun').textContent=fmtRub(r.monthRub)+' ₽';
+    $('#roiBotTimeSub').textContent=state.botmin+' мин/день · '+hrs(botTimeH)+'/мес';
+    $('#roiBotTime').textContent=fmtRub(botTimeCost)+' ₽';
+    $('#roiBotTotal').textContent=fmtRub(botTotal)+' ₽';
+    $('#roiSaveM').textContent=fmtRub(saveM)+' ₽';
+    $('#roiSaveY').textContent=fmtRub(saveM*12)+' ₽';
+    $('#roiTimes').textContent=times>0? '×'+(Math.round(times*10)/10).toLocaleString('ru-RU') : '—';
+
+    var mx=Math.max(manualCost,botTotal,1);
+    $('#barManual').style.width=(manualCost/mx*100)+'%';
+    $('#barBot').style.width=(botTotal/mx*100)+'%';
+    $('#bManual').textContent=fmtRub(manualCost)+' ₽';
+    $('#bBot').textContent=fmtRub(botTotal)+' ₽';
+
+    var freeH=manualH-botTimeH;
+    $('#roiVerdict').innerHTML = saveM>0
+      ? 'Бот освобождает <b>'+hrs(freeH)+'</b> в месяц и экономит <b>'+fmtRub(saveM)+' ₽</b> — это <b>'+fmtRub(saveM*12)+' ₽</b> в год. Содержание почти незаметно на фоне стоимости вашего времени.'
+      : 'При этих цифрах ручной способ пока дешевле — увеличьте объём рутины или стоимость часа, чтобы увидеть порог выгоды.';
+  }
+
+  $('#mentorOpt').style.display='';
+  render();
+})();
 </script>
 </body>
 </html>
