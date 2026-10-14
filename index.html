@@ -287,10 +287,9 @@
 
   <div class="card">
     <h3>Сколько стоит ваш час</h3>
-    <p class="sub">Считаем «полную» стоимость — с налогами и расходами на сотрудника.</p>
-    <div class="field three">
-      <div><span class="mini-lbl">Зарплата в месяц, ₽</span><input type="number" id="salary" value="120000" step="1000" min="0" inputmode="numeric"></div>
-      <div><span class="mini-lbl">Налоги/расходы, %</span><input type="number" id="overhead" value="30" step="1" min="0" inputmode="numeric"></div>
+    <p class="sub">Берём вашу зарплату на руки и делим на рабочие часы.</p>
+    <div class="field two">
+      <div><span class="mini-lbl">Зарплата на руки, ₽</span><input type="number" id="salary" value="120000" step="1000" min="0" inputmode="numeric"></div>
       <div><span class="mini-lbl">Рабочих часов в мес.</span><input type="number" id="hours" value="160" step="1" min="1" inputmode="numeric"></div>
     </div>
     <div class="outrow"><span class="k">Стоимость вашего часа</span><span class="v" id="roiHour">—</span></div>
@@ -377,7 +376,7 @@
   $('#msgs').addEventListener('input',function(){state.msgs=+this.value; $('#msgsVal').textContent=this.value; render();});
   function num(id,key){ $('#'+id).addEventListener('input',function(){ var v=parseFloat(this.value); state[key]=isNaN(v)?0:v; render(); }); }
   num('pin','pin'); num('pout','pout'); num('mprice','mprice'); num('mmonths','mmonths'); num('sprice','sprice'); num('rate','rate');
-  num('salary','salary'); num('overhead','overhead'); num('hours','hours'); num('manmin','manmin'); num('days','days'); num('botmin','botmin');
+  num('salary','salary'); num('hours','hours'); num('manmin','manmin'); num('days','days'); num('botmin','botmin');
   $('#pin').addEventListener('input',setCustom); $('#pout').addEventListener('input',setCustom);
   function setCustom(){ if(state.model!=='custom'){ state.model='custom';
     [].forEach.call($('#model').querySelectorAll('button'),function(x){x.setAttribute('aria-pressed', x.dataset.v==='custom'?'true':'false')});
@@ -468,7 +467,7 @@
 
     // ---- ROI ----
     var hours=state.hours||1;
-    var hourCost=state.salary*(1+state.overhead/100)/hours;
+    var hourCost=state.salary/hours;
     var manualH=state.manmin*state.days/60;
     var manualCost=manualH*hourCost;
     var botTimeH=state.botmin*state.days/60;
